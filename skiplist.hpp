@@ -64,11 +64,11 @@ struct skiplist_iterator {
 
 template<class Tk,class Tv>
 struct const_skiplist_iterator {
-	typedef SkipListNode<Tk,Tv> value_type;
+	typedef const SkipListNode<Tk,Tv> value_type;
 	typedef const SkipListNode<Tk,Tv>& reference;
 
-	typedef const std::shared_ptr<value_type> value_sptr;
-	typedef const std::weak_ptr<value_type> value_wptr;
+	typedef std::shared_ptr<value_type> value_sptr;
+	typedef std::weak_ptr<value_type> value_wptr;
 
 	typedef const_skiplist_iterator<Tk,Tv> _Self;
 
@@ -145,7 +145,7 @@ public :
 
 	skiplist_iterator<Tk,Tv> begin() { return skiplist_iterator<Tk,Tv>(head);}
 
-	const_skiplist_iterator<Tk,Tv> begin() { return const_skiplist_iterator<Tk,Tv>(head);}
+	const_skiplist_iterator<Tk,Tv> begin() const { return const_skiplist_iterator<Tk,Tv>(static_cast<std::shared_ptr<const SkipListNode<Tk,Tv> >>(head));}
 
 public :
 	std::shared_ptr<listnode> head,tail;
