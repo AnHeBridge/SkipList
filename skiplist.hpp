@@ -55,8 +55,8 @@ struct skiplist_iterator {
 		return tmp;
 	}
 	
-	bool operator == (const _Self& rhs) { return _node == rhs._node;}
-	bool operator != (const _Self& rhs) { return _node != rhs._node;}
+	bool operator == (const _Self& rhs) const { return _node == rhs._node;}
+	bool operator != (const _Self& rhs) const { return _node != rhs._node;}
 
 	value_wptr _node;
 };
@@ -73,6 +73,8 @@ struct const_skiplist_iterator {
 	typedef const_skiplist_iterator<Tk,Tv> _Self;
 
 	explicit const_skiplist_iterator(value_sptr _x) : _node(_x){}
+
+	const_skiplist_iterator(const skiplist_iterator<Tk,Tv>& _x) : _node(_x._node){}
 
 	const_skiplist_iterator() = default;
 	
@@ -131,6 +133,9 @@ public :
 template<class Tk,class Tv>
 class SkipList {
 	using listnode = SkipListNode<Tk,Tv>;
+public :
+	using iterator = skiplist_iterator<Tk,Tv>;
+	using const_iterator = const_skiplist_iterator<Tk,Tv>;
 private :
 	void deleteNode(std::vector<std::shared_ptr<listnode>>& update,std::shared_ptr<listnode> del_node);
 public :
@@ -143,9 +148,13 @@ public :
 	
 	void printlist();
 
-	skiplist_iterator<Tk,Tv> begin() { return skiplist_iterator<Tk,Tv>(head);}
+	iterator begin() { return iterator(head);}
 
-	const_skiplist_iterator<Tk,Tv> begin() const { return const_skiplist_iterator<Tk,Tv>(static_cast<std::shared_ptr<const SkipListNode<Tk,Tv> >>(head));}
+	const_iterator begin() const { return const_iterator(static_cast<std::shared_ptr<const SkipListNode<Tk,Tv> >>(head));}
+
+	skiplist_iterator<Tk,Tv> end() { return nullptr;}
+
+	const_skiplist_iterator<Tk,Tv> end() const { return nullptr;}
 
 public :
 	std::shared_ptr<listnode> head,tail;
