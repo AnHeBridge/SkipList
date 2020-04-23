@@ -29,9 +29,9 @@ struct skiplist_iterator {
 
 	skiplist_iterator() = default;
 	
-	reference operator *() const { return *this->_node.lock(); }
+	reference operator *() const { return *this->_node; }
 
-	value_sptr operator ->() const {return this->_node.lock(); }
+	value_sptr operator ->() const {return this->_node; }
 
 	_Self& operator++() {
 		_node = _node->level[0].forward;
@@ -58,7 +58,7 @@ struct skiplist_iterator {
 	bool operator == (const _Self& rhs) const { return _node == rhs._node;}
 	bool operator != (const _Self& rhs) const { return _node != rhs._node;}
 
-	value_wptr _node;
+	value_sptr _node;
 };
 
 
@@ -78,9 +78,9 @@ struct const_skiplist_iterator {
 
 	const_skiplist_iterator() = default;
 	
-	reference operator *() const { return *this->_node.lock(); }
+	reference operator *() const { return *this->_node; }
 
-	value_sptr operator ->() const {return this->_node.lock(); }
+	value_sptr operator ->() const {return this->_node; }
 
 	_Self& operator++() {
 		_node = _node->level[0].forward;
@@ -107,7 +107,7 @@ struct const_skiplist_iterator {
 	bool operator == (const _Self& rhs) { return _node == rhs._node;}
 	bool operator != (const _Self& rhs) { return _node != rhs._node;}
 
-	value_wptr _node;
+	value_sptr _node;
 };
 
 
@@ -123,7 +123,7 @@ public :
 	SkipListNode(const Tk& node_key,const Tv& value,int levelnum);
 
 public : 
-	Tk _key;
+	const Tk _key;
 	Tv _value;
 	std::weak_ptr<SkipListNode<Tk,Tv>> backward;
 	
@@ -148,13 +148,33 @@ public :
 	
 	void printlist();
 
-	iterator begin() { return iterator(head);}
+	iterator begin() {
+		if (this->length == 0)
+			return iterator(nullptr);
+		else 
+			return iterator(head->level[0].forward);
+	}
 
-	const_iterator begin() const { return const_iterator(static_cast<std::shared_ptr<const SkipListNode<Tk,Tv> >>(head));}
+	const_iterator begin() const { 
+		if (length == 0) 
+			return const_iterator(nullptr);
+		else 
+			return const_iterator(static_cast<std::shared_ptr<const SkipListNode<Tk,Tv> >>(head->level[0].forward));
+	}
 
-	skiplist_iterator<Tk,Tv> end() { return nullptr;}
+	iterator  end() { return iterator(nullptr);}
+	const_iterator end() const { return const_iterator(nullptr);}
 
-	const_skiplist_iterator<Tk,Tv> end() const { return nullptr;}
+	iterator lower_bound(const Tk& find_key);
+	const_iterator lower_bound(const Tk& find_key) const;
+
+	iterator find(const Tk& find_key);
+	const_iterator find(const Tk& find_key) const;
+
+	unsigned long getRank(const Tk& find_key) const;
+
+	iterator getRankElement(unsigned long rank);
+	const_iterator getRankElement(unsigned long rank) const;
 
 public :
 	std::shared_ptr<listnode> head,tail;
@@ -291,5 +311,103 @@ void SkipList<Tk,Tv>::printlist() {
 	}
 }
 
+template<class Tk,class Tv>
+typename SkipList<Tk,Tv>::iterator SkipList<Tk,Tv>::lower_bound(const Tk& find_key) {
+	std::shared_ptr<SkipList<Tk,Tv>::listnode> x = this->head;
+	for (int i = this->level - 1 ; i >= 0 ; i--) {
+		while (x->level[i].forward && x->level[i].forward->_key < find_key) 
+			x = x->level[i].forward;
+	}
+	return SkipList<Tk,Tv>::iterator(x->level[0].forward);
+}
+
+template<class Tk,class Tv>
+typename SkipList<Tk,Tv>::const_iterator SkipList<Tk,Tv>::lower_bound(const Tk& find_key) const {
+	std::shared_ptr<SkipList<Tk,Tv>::listnode> x = this->head;
+	for (int i = this->level - 1 ; i >= 0 ; i--) {
+		while (x->level[i].forward && x->level[i].forward->_key < find_key) 
+			x = x->level[i].forward;
+	}
+	return SkipList<Tk,Tv>::const_iterator(x->level[0].forward);
+}
+
+template<class Tk,class Tv>
+typename SkipList<Tk,Tv>::iterator SkipList<Tk,Tv>::find(const Tk& find_key) {
+	std::shared_ptr<SkipList<Tk,Tv>::listnode> x = this->head;
+	for (int i = this->level - 1 ; i >= 0 ; i--) {
+		while (x->level[i].forward && x->level[i].forward->_key < find_key) 
+			x = x->level[i].forward;
+	}
+	if (x->level[0].forward && x->level[0].forward->_key == find_key)
+		return SkipList<Tk,Tv>::iterator(x->level[0].forward);
+	else 
+		return this->end();
+}
+
+template<class Tk,class Tv>
+typename SkipList<Tk,Tv>::const_iterator SkipList<Tk,Tv>::find(const Tk& find_key) const {
+	std::shared_ptr<SkipList<Tk,Tv>::listnode> x = this->head;
+	for (int i = this->level - 1 ; i >= 0 ; i--) {
+		while (x->level[i].forward && x->level[i].forward->_key < find_key) 
+			x = x->level[i].forward;
+	}
+	if (x->level[0].forward && x->level[0].forward->_key == find_key)
+		return SkipList<Tk,Tv>::const_iterator(x->level[0].forward);
+	else 
+		return this->end();
+}
+
+template<class Tk,class Tv>
+unsigned long SkipList<Tk,Tv>::getRank(const Tk& find_key) const {
+	SkipList<Tk,Tv>::listnode* x = this->head.get();
+	unsigned long rank = 0;
+	for (int i = this->level - 1 ; i >= 0 ; i--) {
+		while (x->level[i].forward && x->level[i].forward->_key <= find_key) {
+			rank += x->level[i].span;
+			if (x->level[i].forward->_key == find_key)
+				return rank;
+			x = x->level[i].forward.get();
+		}
+	}
+
+	if (x->level[0].forward && x->level[0].forward->_key == find_key)
+		return rank + x->level[0].span;
+	return 0;
+}
+
+template<class Tk,class Tv>
+typename SkipList<Tk,Tv>::iterator SkipList<Tk,Tv>::getRankElement(unsigned long rank) {
+	if (rank > this->length or rank == 0)
+		return iterator(nullptr);
+	std::shared_ptr<SkipList<Tk,Tv>::listnode> x = this->head;
+	unsigned long current_rank = 0;
+	for (int i = this->level - 1 ; i >= 0 ; i--) {
+		while (x->level[i].forward && x->level[i].span + current_rank <= rank) {
+			current_rank += x->level[i].span;
+			x = x->level[i].forward;
+			if (current_rank == rank)
+				return iterator(x);
+		}
+	}
+	return iterator(nullptr);
+}
+
+template<class Tk,class Tv>
+typename SkipList<Tk,Tv>::const_iterator SkipList<Tk,Tv>::getRankElement(unsigned long rank) const {
+	if (rank > this->length or rank == 0)
+		return const_iterator(nullptr);
+
+	std::shared_ptr<SkipList<Tk,Tv>::listnode> x = this->head;
+	unsigned long current_rank = 0;
+	for (int i = this->level - 1 ; i >= 0 ; i--) {
+		while (x->level[i].forward && x->level[i].span + current_rank <= rank) {
+			current_rank += x->level[i].span;
+			x = x->level[i].forward;
+			if (current_rank == rank)
+				return const_iterator(x);
+		}
+	}
+	return const_iterator(nullptr);
+}
 
 #endif
