@@ -119,7 +119,7 @@ class SkipListNode {
 	};
 public :
 	SkipListNode() = delete;
-	~SkipListNode() { std::cout << "destroctor node" << std::endl; }
+	~SkipListNode() = default;
 	SkipListNode(const Tk& node_key,const Tv& value,int levelnum);
 
 public : 
@@ -140,7 +140,7 @@ private :
 	void deleteNode(std::vector<std::shared_ptr<listnode>>& update,std::shared_ptr<listnode> del_node);
 public :
 	SkipList(int levelnum);
-	~SkipList() { std::cout << "destruct skiplist" << std::endl; }
+	~SkipList() = default;
 
 	std::shared_ptr<listnode> insert(const Tk& key,const Tv& value,int rand_level);
 
@@ -177,10 +177,10 @@ public :
 	const_iterator getRankElement(unsigned long rank) const;
 
 public :
-	std::shared_ptr<listnode> head,tail;
+	int max_level;
+	std::shared_ptr<listnode> head;
 	uint64_t length = 0;
 	int level = 1;
-	int max_level;
 };
 
 
@@ -188,7 +188,7 @@ template<class Tk,class Tv>
 SkipListNode<Tk,Tv>::SkipListNode(const Tk& node_key,const Tv& value,int levelnum) : _key(node_key),_value(value),level(levelnum) { }
 
 template<class Tk,class Tv>
-SkipList<Tk,Tv>::SkipList(int levelnum) : max_level(levelnum),tail(nullptr) {
+SkipList<Tk,Tv>::SkipList(int levelnum) : max_level(levelnum){
 	Tk default_k = Tk();
 	Tv default_v = Tv();
 	head = std::make_shared<SkipList<Tk,Tv>::listnode>(default_k,default_v,levelnum);
@@ -247,8 +247,6 @@ std::shared_ptr<SkipListNode<Tk,Tv>> SkipList<Tk,Tv>::insert(const Tk& key,const
 	insert_node->backward = (update[0] == this->head.get()) ? NULL : x;
 	if (insert_node->level[0].forward)
 		insert_node->level[0].forward->backward = insert_node;
-	else 
-		this->tail = insert_node;
 	
 	this->length++;
 	return insert_node;
@@ -285,8 +283,6 @@ void SkipList<Tk,Tv>::deleteNode(std::vector<std::shared_ptr<listnode>>& update,
 
 	if (del_node->level[0].forward)
 		del_node->level[0].forward->backward = del_node->backward;
-	else 
-		this->tail = del_node->backward.lock();
 
 	while(this->level > 1 && !this->head->level[this->level - 1].forward)
 		this->level--;
@@ -297,7 +293,6 @@ void SkipList<Tk,Tv>::deleteNode(std::vector<std::shared_ptr<listnode>>& update,
 template<class Tk,class Tv>
 void SkipList<Tk,Tv>::printlist() {
 	std::cout << "mylevel is " << this->level << std::endl;
-	std::cout << "tail is " << this->tail->_key << std::endl;
 	for (int i = this->max_level - 1;  i >= 0; i--) {
 		std::cout << "level " << i << std::endl;
 		std::shared_ptr<SkipListNode<Tk,Tv>> x = this->head;
