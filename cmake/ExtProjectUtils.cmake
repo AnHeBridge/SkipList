@@ -25,7 +25,7 @@ function(ExtProjectGit repourl tag destination)
     cmake_parse_arguments(ExtProjectGit "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     set(cmake_cli_args -DCMAKE_INSTALL_PREFIX=${destination}
-        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+    -DGOOGLETEST_PATH=${DEPS_ROOT}/src/googletest.git -I${DEPS_ROOT}/include -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
     if(CMAKE_TOOLCHAIN_FILE)
         get_filename_component(_ft_path ${CMAKE_TOOLCHAIN_FILE} ABSOLUTE)
         get_filename_component(_cm_rt_opath ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} ABSOLUTE)
@@ -37,6 +37,8 @@ function(ExtProjectGit repourl tag destination)
     foreach(cmake_key ${ExtProjectGit_CMAKE_ARGS})
         set(cmake_cli_args ${cmake_key} ${cmake_cli_args})
     endforeach()
+
+    message(STATUS "Get cmake_cli_args: ${cmake_cli_args} ")
 
     ExternalProject_Add(${_name}
         GIT_REPOSITORY ${repourl}

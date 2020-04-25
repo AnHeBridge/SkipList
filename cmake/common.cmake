@@ -4,6 +4,8 @@ set(PROJECT_NAME_STR skip_list)
 project(${PROJECT_NAME_STR} C CXX)
 
 include_directories("${DEPS_ROOT}/include")
+get_filename_component(DEPS_ROOT "${PROJECT_BINARY_DIR}/deps" ABSOLUTE)
+message(STATUS "INCLUDEDIRS  ${DEPS_ROOT}/include")
 include_directories("${PROJECT_SOURCE_DIR}")
 link_directories("${DEPS_ROOT}/lib")
 link_directories("${DEPS_ROOT}/lib64")

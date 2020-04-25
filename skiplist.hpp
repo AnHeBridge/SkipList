@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <random>
+#include <cstring>
 
 unsigned int generaterand_random(unsigned int llimit,unsigned int rlimit) {
 	static std::mt19937 engine{ std::random_device{} ()};
