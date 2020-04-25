@@ -1,11 +1,11 @@
-##跳跃表skiplist
+## 跳跃表skiplist
 
-##说明
+## 说明
 C++实现跳跃表，HeadOnly ，支持模板、迭代器。
 提供基本的遍历，获取名次，获取名次对应element，提供lower_bound（定义同stl）方法
 顺便熟悉一下智能指针、可修改为原生指针提高一波效率（~~~
 
-##使用说明
+## 使用说明
 ```
 std::unique_ptr<SkipList<int,std::string>> a(new SkipList<int,std::string>(32));
 //插入key、value 返回插入后对应对象的迭代器
