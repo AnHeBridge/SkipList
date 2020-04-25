@@ -6,7 +6,7 @@ C++实现跳跃表，HeadOnly ，支持模板、迭代器。
 顺便熟悉一下智能指针、可修改为原生指针提高一波效率（~~~
 
 ## 使用说明
-```
+```c++
 std::unique_ptr<SkipList<int,std::string>> a(new SkipList<int,std::string>(32));
 //插入key、value 返回插入后对应对象的迭代器
 a->insert(value,std::to_string(1));
